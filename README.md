@@ -1,2 +1,2 @@
-# ws-experiments
+# WS experiments
 WebSockets experiments an idea testing
