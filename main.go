@@ -17,7 +17,7 @@ var (
 		"wss://stream.binance.com:9443/ws/btcusdt@aggTrade",
 		// Add more endpoints as needed
 	}
-	numConnectionsPerEndpoint = 10 // Number of connections per endpoint
+	numConnectionsPerEndpoint = 190 // Number of connections per endpoint
 )
 
 type SubscriptionMessage struct {
