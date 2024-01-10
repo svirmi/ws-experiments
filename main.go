@@ -18,7 +18,7 @@ var (
 		"wss://testnet.binance.vision/ws/atomusdt@aggTrade",
 		"wss://testnet.binance.vision/ws/minausdt@aggTrade",
 	}
-	numConnectionsPerEndpoint = 190 // Number of connections per endpoint
+	numConnectionsPerEndpoint = 1 // Number of connections per endpoint
 )
 
 type SubscriptionMessage struct {
