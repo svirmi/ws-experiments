@@ -1,11 +1,14 @@
 package main
 
 import (
+	"chatgpt/utils"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -13,10 +16,8 @@ import (
 
 var (
 	endpoints = []string{
-		"wss://testnet.binance.vision/ws/nearusdt@aggTrade",
-		"wss://testnet.binance.vision/ws/btcusdt@aggTrade",
-		"wss://testnet.binance.vision/ws/atomusdt@aggTrade",
-		"wss://testnet.binance.vision/ws/minausdt@aggTrade",
+		"wss://testnet.binance.vision/ws/%s@aggTrade",
+		// "wss://stream.binance.com:9443/stream/%s@aggTrade",
 	}
 	numConnectionsPerEndpoint = 1 // Number of connections per endpoint
 )
@@ -24,7 +25,7 @@ var (
 type SubscriptionMessage struct {
 	Method string   `json:"method"`
 	Params []string `json:"params"`
-	ID     int64    `json:"id"`
+	ID     int      `json:"id"`
 }
 
 type EndpointResponse struct {
@@ -33,6 +34,25 @@ type EndpointResponse struct {
 }
 
 func main() {
+
+	quoteAsset := "USDT"
+
+	tPairs := utils.TradablePairs(quoteAsset)
+
+	var symbols []string
+
+	for _, tPair := range tPairs {
+		symbols = append(symbols, strings.ToLower(tPair.Symbol))
+	}
+
+	// https://dev.binance.vision/t/how-to-create-binance-websocket-connections-to-all-coins-of-futures-market/16025/2
+
+	symbols = symbols[:120]
+
+	numConnections := len(symbols)
+
+	fmt.Printf("Subscribed to %d pairs", numConnections)
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
@@ -41,9 +61,9 @@ func main() {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(endpoints) * numConnectionsPerEndpoint)
 
-	for _, endpoint := range endpoints {
-		for i := 0; i < numConnectionsPerEndpoint; i++ {
-			go connectToWebSocket(endpoint, responseChannel, wg)
+	for _, symbol := range symbols {
+		for i := 0; i < numConnections; i++ {
+			go connectToWebSocket(symbol, responseChannel, wg)
 		}
 	}
 
@@ -60,10 +80,14 @@ func main() {
 	select {}
 }
 
-func connectToWebSocket(endpoint string, responseChan chan<- EndpointResponse, wg *sync.WaitGroup) {
-	defer wg.Done() // Ensure WaitGroup is decremented when the function exits
+func connectToWebSocket(symbol string, responseChan chan<- EndpointResponse, wg *sync.WaitGroup) {
+	defer wg.Done()
 
-	c, _, err := websocket.DefaultDialer.Dial(endpoint, nil)
+	stream := fmt.Sprintf(endpoints[0], symbol)
+
+	fmt.Println(stream)
+
+	c, _, err := websocket.DefaultDialer.Dial(stream, nil)
 	if err != nil {
 		log.Println("dial:", err)
 		return
@@ -72,8 +96,8 @@ func connectToWebSocket(endpoint string, responseChan chan<- EndpointResponse, w
 
 	subscriptionMsg := SubscriptionMessage{
 		Method: "SUBSCRIBE",
-		Params: []string{"btcusdt@aggTrade", "btcusdt@depth"},
-		ID:     1,
+		// Params: []string{"btcusdt@aggTrade", "atomusdt@depth"},
+		ID: rand.Intn(10000),
 	}
 
 	subscriptionJSON, err := json.Marshal(subscriptionMsg)
@@ -96,7 +120,7 @@ func connectToWebSocket(endpoint string, responseChan chan<- EndpointResponse, w
 		}
 
 		responseChan <- EndpointResponse{
-			Endpoint: endpoint,
+			Endpoint: symbol,
 			Message:  message,
 		}
 	}
