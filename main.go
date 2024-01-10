@@ -13,9 +13,10 @@ import (
 
 var (
 	endpoints = []string{
-		"wss://testnet.binance.vision:9443/ws",
-		"wss://stream.binance.com:9443/ws/btcusdt@aggTrade",
-		// Add more endpoints as needed
+		"wss://testnet.binance.vision/ws/nearusdt@aggTrade",
+		"wss://testnet.binance.vision/ws/btcusdt@aggTrade",
+		"wss://testnet.binance.vision/ws/atomusdt@aggTrade",
+		"wss://testnet.binance.vision/ws/minausdt@aggTrade",
 	}
 	numConnectionsPerEndpoint = 190 // Number of connections per endpoint
 )
